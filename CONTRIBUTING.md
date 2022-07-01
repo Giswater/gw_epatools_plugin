@@ -1,4 +1,4 @@
-## WELCOME TO GISWATER CONTRIBUTORS GUIDE (gw_epa_extratools_plugin)
+## WELCOME TO GISWATER CONTRIBUTORS GUIDE (gw_epa_tools_plugin)
 
 This repo is focused to add capabilities in order to run recursive go2epa processes
 
