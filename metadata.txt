@@ -2,7 +2,7 @@
 # Mandatory items:
 
 [general]
-name=gw_epa_tools_plugin
+name=gw_epatools_plugin
 qgisMinimumVersion=3.10.13
 qgisMaximumVersion=3.99
 description=EPA tools for giswater plugin
