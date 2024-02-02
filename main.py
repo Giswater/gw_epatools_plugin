@@ -145,7 +145,7 @@ class GWEpaPlugin(QObject):
         project_type in ('ws', 'ud')
         """
 
-        self.create_toolbar('epa')
+        self.create_toolbar('epatools')
 
         # Manage action group of every toolbar
         parent = self.iface.mainWindow()
