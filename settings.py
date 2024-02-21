@@ -23,6 +23,7 @@ this.dialog = None
 this.toolbox = None
 this.task = None
 this.gw_global_vars = None
+this.lib_vars = None
 
 
 def init_plugin():
@@ -49,6 +50,7 @@ def init_plugin():
         this.tools_os = importlib.import_module('.tools_os', package=f'{this.giswater_folder}.libs')
         this.tools_qgis = importlib.import_module('.tools_qgis', package=f'{this.giswater_folder}.libs')
         this.tools_qt = importlib.import_module('.tools_qt', package=f'{this.giswater_folder}.libs')
+        this.lib_vars = importlib.import_module('.lib_vars', package=f'{this.giswater_folder}.libs')
     this.tools_gw = importlib.import_module('.tools_gw', package=f'{this.giswater_folder}.core.utils')
     this.dialog = importlib.import_module('.dialog', package=f'{this.giswater_folder}.core.toolbars')
     this.toolbox = importlib.import_module('.toolbox_btn', package=f'{this.giswater_folder}.core.toolbars.utilities')
