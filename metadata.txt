@@ -9,13 +9,15 @@ description=EPA tools for giswater plugin
 about=
     To use this plugin, install first the Giswater plugin and the WNTR python package.
     <a href="https://github.com/Giswater/gw_epatools_plugin#how-to-install-wntr-package">How to install the WNTR package</a>. 
-version=3.6.007
+version=3.6.009
 
 author=Nestor Ibáñez, David Erill, Barbara Rzepka, Sergi Muñoz, Josep Lluís Sala, Edgar Fusté, Sergi Maspons, Albert Bofill, Xavier Torret, Pablo Marques
 
 # End of mandatory metadata
 
 changelog=
+    3.6.009 (2024-03-27)
+    - Fix duplicated toolbars when loading other project
     3.6.007 (2024-02-06)
     - Additional Demand Check tool
    
