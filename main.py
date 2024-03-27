@@ -58,6 +58,13 @@ class GWEpaPlugin(QObject):
                 button.action.setVisible(False)
                 del button
 
+        for plugin_toolbar in self.plugin_toolbars.values():
+            if plugin_toolbar.enabled:
+                plugin_toolbar.toolbar.setVisible(False)
+                plugin_toolbar.toolbar.setParent(None)
+                del plugin_toolbar.toolbar
+        
+        self.plugin_toolbars = {}
 
     def initGui(self):
         """ Create the menu entries and toolbar icons inside the QGIS GUI """
