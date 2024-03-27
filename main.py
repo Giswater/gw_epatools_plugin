@@ -109,6 +109,9 @@ class GWEpaPlugin(QObject):
 
     def _project_read(self):
 
+        # Unload plugin before reading opened project
+        self.unload()
+
         if not self._check_project(True):
             return
 
