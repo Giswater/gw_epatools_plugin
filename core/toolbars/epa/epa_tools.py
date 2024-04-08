@@ -13,6 +13,7 @@ from qgis.PyQt.QtWidgets import QMenu, QAction, QActionGroup
 from ....settings import dialog, gw_global_vars
 from .... import global_vars
 from .anl_add_demand_check import AddDemandCheck
+from .anl_recursive_go2epa import RecursiveEpa
 
 
 class GwEpaTools(dialog.GwAction):
@@ -59,6 +60,7 @@ class GwEpaTools(dialog.GwAction):
 
         new_actions = [
             (anl_menu, ('ws'), 'ADDITIONAL DEMAND CHECK'),
+            (anl_menu, ('ud', 'ws'), 'EPA MULTI CALLS'),
         ]
         for menu, types, action in new_actions:
             if gw_global_vars.project_type in types:
@@ -77,3 +79,7 @@ class GwEpaTools(dialog.GwAction):
         if name == 'ADDITIONAL DEMAND CHECK':
             add_demand_check = AddDemandCheck()
             add_demand_check.clicked_event()
+
+        elif name == 'EPA MULTI CALLS':
+            recursive_epa = RecursiveEpa()
+            recursive_epa.clicked_event()

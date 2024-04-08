@@ -70,3 +70,7 @@ def get_ui_class(ui_file_name, subfolder='shared'):
 FORM_CLASS = get_ui_class('add_demand_check.ui', 'epa')
 class AddDemandCheckUi(GwDialog, FORM_CLASS):
     pass
+
+FORM_CLASS = get_ui_class('recursive_go2epa.ui', 'epa')
+class RecursiveEpaUi(GwDialog, FORM_CLASS):
+    pass

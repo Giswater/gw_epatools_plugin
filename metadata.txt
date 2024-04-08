@@ -16,6 +16,8 @@ author=Nestor Ibáñez, David Erill, Barbara Rzepka, Sergi Muñoz, Josep Lluís 
 # End of mandatory metadata
 
 changelog=
+    3.6.009-1 DEV
+    - Epa Multi Calls
     3.6.009 (2024-03-27)
     - Fix duplicated toolbars when loading other project
     3.6.007 (2024-02-06)
