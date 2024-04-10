@@ -4,12 +4,15 @@ The program is free software: you can redistribute it and/or modify it under the
 General Public License as published by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
 """
+
 import copy
 import csv
 import itertools
 import json
 import math
 import subprocess
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from qgis.core import QgsTask
@@ -21,9 +24,11 @@ try:
     import wntr
     from wntr.epanet.util import from_si, to_si, FlowUnits, HydParam
 except ImportError:
-    if tools_qt.show_question("WNTR Python package not found. Do you want to install WNTR?"):
+    if tools_qt.show_question(
+        "WNTR Python package not found. Do you want to install WNTR?"
+    ):
         subprocess.run(["python", "-m", "ensurepip"])
-        install_wntr = subprocess.run(['python', '-m', 'pip', 'install', 'wntr==0.5.0'])
+        install_wntr = subprocess.run(["python", "-m", "pip", "install", "wntr==0.5.0"])
         if install_wntr.returncode:
             tools_qt.show_info_box(
                 "WNTR cannot be installed automatically. See the gw_epatools_plugin documentation for manual WNTR installation."
@@ -62,75 +67,45 @@ class GwAddDemandCheck(GwTask):
         old_steps = self.cur_step
         self.cur_step = old_steps + "\n\nChecking individual nodes..."
 
-        for i, (node_name, node) in enumerate(self.config.junctions.items()):
-            dem = node["requiredDemand"]
-            press = node["requiredPressure"]
-
-            self.cur_step = old_steps + f"\n\nChecking individual nodes ({i+1}/{self.qtd_nodes})..."
-
-            # Skip node if already done in previous execution
-            if node_name in self.results:
-                self._update_pairs(node_name)
-                self.executed_simulations += 1
-                self.total_simulations = (
-                    self.executed_simulations
-                    + 2 * (self.qtd_nodes - i - 1)
-                    + len(self.pairs)
-                )
-                continue
-
-            if node_name not in self.network.node_name_list:
-                self.results[node_name] = {"error": "Node not found in INP file."}
-                continue
-
-            # Run double test fist
-            double_demand_node = {
-                "name": node_name,
-                "requiredDemand": 2 * dem,
-                "requiredPressure": press,
-            }
-            test = self._execute_individual_check([double_demand_node])
-            double_test = test[node_name]
-
-            if self.isCanceled():
-                return False
-
-            # Use result of double test to check for need of simple test
-            if (
-                double_test["modelDemand"] + self.accuracy >= dem
-                and double_test["modelPressure"] + self.accuracy >= press
+        i = 0
+        with ThreadPoolExecutor() as executor:
+            for node_name, result in executor.map(
+                self._check_node,
+                self.config.junctions.keys(),
+                self.config.junctions.values(),
             ):
-                simple_test = {"status": "ok"}
-            elif (
-                double_test["modelDemand"] + self.accuracy < dem
-                and double_test["modelPressure"] + self.accuracy < press
-            ):
-                simple_test = {
-                    "status": "failed",
-                    "requiredDemand": dem,
-                    "requiredPressure": press,
-                    "modelDemand": double_test["modelDemand"],
-                    "modelPressure": double_test["modelPressure"],
-                }
-            else:
-                test = self._execute_individual_check([node])
-                simple_test = test[node_name]
+                i += 1
 
                 if self.isCanceled():
                     return False
 
-            self.results[node_name] = {
-                "simple": simple_test,
-                "doubled": double_test,
-                "paired": {"status": None},
-            }
+                self.cur_step = (
+                    old_steps
+                    + f"\n\nChecking individual nodes ({i}/{self.qtd_nodes})..."
+                )
 
-            self._update_pairs(node_name)
-            self.total_simulations = (
-                self.executed_simulations
-                + 2 * (self.qtd_nodes - i - 1)
-                + len(self.pairs)
-            )
+                # Skip node if already done in previous execution
+                if result is None:
+                    self._update_pairs(node_name)
+                    self.executed_simulations += 1
+                    self.total_simulations = (
+                        self.executed_simulations
+                        + 2 * (self.qtd_nodes - i - 2)
+                        + len(self.pairs)
+                    )
+                    continue
+
+                self.results[node_name] = result
+
+                self._update_pairs(node_name)
+                self.total_simulations = (
+                    self.executed_simulations
+                    + 2 * (self.qtd_nodes - i - 2)
+                    + len(self.pairs)
+                )
+
+                if self.executed_simulations % 10 == 0:
+                    self._save_partial()
 
         return True
 
@@ -142,7 +117,9 @@ class GwAddDemandCheck(GwTask):
             node1 = self.config.junctions[node1_name]
             node2 = self.config.junctions[node2_name]
 
-            self.cur_step = old_steps + f"\n\nChecking node pairs ({i+1}/{qtd_pairs})..."
+            self.cur_step = (
+                old_steps + f"\n\nChecking node pairs ({i+1}/{qtd_pairs})..."
+            )
 
             # Skip pair if already done in previous execution
             if node2_name in self.results[node1_name]["paired"]:
@@ -209,7 +186,7 @@ class GwAddDemandCheck(GwTask):
             demand = to_si(FlowUnits[units], node["requiredDemand"], HydParam.Demand)
             junction.demand_timeseries_list.append((demand, pat))
 
-        prefix = str(Path.home() / "temp")
+        prefix = str(Path.home() / ".temp/") + str(uuid.uuid4()).split("-")[0]
         results = wntr.sim.EpanetSimulator(test_wn).run_sim(file_prefix=prefix).node
 
         test_results = {}
@@ -243,9 +220,6 @@ class GwAddDemandCheck(GwTask):
             }
             test_results[node["name"]] = node_result
 
-        self.executed_simulations += 1
-        if self.executed_simulations % 10 == 0:
-            self._save_partial()
         return test_results
 
     def _get_initial_pairs(self):
@@ -341,6 +315,55 @@ class GwAddDemandCheck(GwTask):
             """
         )
         tools_db.execute_sql(self._update_addparam_sql_string())
+
+    def _check_node(self, node_name, node):
+        dem = node["requiredDemand"]
+        press = node["requiredPressure"]
+
+        # Skip node if already done in previous execution
+        if node_name in self.results:
+            return node_name, None
+
+        if node_name not in self.network.node_name_list:
+            return node_name, {"error": "Node not found in INP file."}
+
+        # Run double test fist
+        double_demand_node = {
+            "name": node_name,
+            "requiredDemand": 2 * dem,
+            "requiredPressure": press,
+        }
+        test = self._execute_individual_check([double_demand_node])
+        double_test = test[node_name]
+        self.executed_simulations += 1
+
+        # Use result of double test to check for need of simple test
+        if (
+            double_test["modelDemand"] + self.accuracy >= dem
+            and double_test["modelPressure"] + self.accuracy >= press
+        ):
+            simple_test = {"status": "ok"}
+        elif (
+            double_test["modelDemand"] + self.accuracy < dem
+            and double_test["modelPressure"] + self.accuracy < press
+        ):
+            simple_test = {
+                "status": "failed",
+                "requiredDemand": dem,
+                "requiredPressure": press,
+                "modelDemand": double_test["modelDemand"],
+                "modelPressure": double_test["modelPressure"],
+            }
+        else:
+            test = self._execute_individual_check([node])
+            simple_test = test[node_name]
+            self.executed_simulations += 1
+
+        return node_name, {
+            "simple": simple_test,
+            "doubled": double_test,
+            "paired": {"status": None},
+        }
 
     def _update_addparam_sql_string(self):
         template = """
