@@ -87,7 +87,6 @@ class GwAddDemandCheck(GwTask):
                 # Skip node if already done in previous execution
                 if result is None:
                     self._update_pairs(node_name)
-                    self.executed_simulations += 1
                     self.total_simulations = (
                         self.executed_simulations
                         + 2 * (self.qtd_nodes - i - 2)
@@ -109,34 +108,102 @@ class GwAddDemandCheck(GwTask):
 
         return True
 
+    def _check_node(self, node_name, node):
+        dem = node["requiredDemand"]
+        press = node["requiredPressure"]
+
+        # Skip node if already done in previous execution
+        if node_name in self.results:
+            self.executed_simulations += 1
+            return node_name, None
+
+        if node_name not in self.network.node_name_list:
+            self.executed_simulations += 1
+            return node_name, {"error": "Node not found in INP file."}
+
+        # Run double test fist
+        double_demand_node = {
+            "name": node_name,
+            "requiredDemand": 2 * dem,
+            "requiredPressure": press,
+        }
+        test = self._execute_individual_check([double_demand_node])
+        double_test = test[node_name]
+        self.executed_simulations += 1
+
+        # Use result of double test to check for need of simple test
+        if (
+            double_test["modelDemand"] + self.accuracy >= dem
+            and double_test["modelPressure"] + self.accuracy >= press
+        ):
+            simple_test = {"status": "ok"}
+        elif (
+            double_test["modelDemand"] + self.accuracy < dem
+            and double_test["modelPressure"] + self.accuracy < press
+        ):
+            simple_test = {
+                "status": "failed",
+                "requiredDemand": dem,
+                "requiredPressure": press,
+                "modelDemand": double_test["modelDemand"],
+                "modelPressure": double_test["modelPressure"],
+            }
+        else:
+            test = self._execute_individual_check([node])
+            simple_test = test[node_name]
+            self.executed_simulations += 1
+
+        return node_name, {
+            "simple": simple_test,
+            "doubled": double_test,
+            "paired": {"status": None},
+        }
+
+    def _check_pair(self, pair):
+        node1_name, node2_name = pair
+        node1 = self.config.junctions[node1_name]
+        node2 = self.config.junctions[node2_name]
+
+        # Skip pair if already done in previous execution
+        if node2_name in self.results[node1_name]["paired"]:
+            self.executed_simulations += 1
+            return None
+
+        pair_test = self._execute_individual_check([node1, node2])
+        self.executed_simulations += 1
+
+        return pair_test
+
     def _check_pairs(self):
         qtd_pairs = len(self.pairs)
         old_steps = self.cur_step
         self.cur_step = old_steps + "\n\nChecking node pairs..."
-        for i, (node1_name, node2_name) in enumerate(self.pairs):
-            node1 = self.config.junctions[node1_name]
-            node2 = self.config.junctions[node2_name]
 
-            self.cur_step = (
-                old_steps + f"\n\nChecking node pairs ({i+1}/{qtd_pairs})..."
-            )
+        i = 0
+        with ThreadPoolExecutor() as executor:
+            for result in executor.map(self._check_pair, self.pairs):
+                i += 1
+                self.cur_step = (
+                    old_steps + f"\n\nChecking node pairs ({i}/{qtd_pairs})..."
+                )
 
-            # Skip pair if already done in previous execution
-            if node2_name in self.results[node1_name]["paired"]:
-                self.executed_simulations += 1
-                continue
+                if self.isCanceled():
+                    return False
 
-            pair_test = self._execute_individual_check([node1, node2])
+                # Skip pair if already done in previous execution
+                if result is None:
+                    continue
 
-            if self.isCanceled():
-                return False
+                node1_name, node2_name = result.keys()
 
-            for first, second in itertools.permutations((node1_name, node2_name)):
-                if self.results[first]["paired"]["status"] is None:
-                    self.results[first]["paired"]["status"] = pair_test[first]["status"]
-                elif pair_test[first]["status"] == "failed":
-                    self.results[first]["paired"]["status"] = "failed"
-                self.results[first]["paired"][second] = pair_test[first]
+                for first, second in itertools.permutations((node1_name, node2_name)):
+                    if self.results[first]["paired"]["status"] is None:
+                        self.results[first]["paired"]["status"] = result[first][
+                            "status"
+                        ]
+                    elif result[first]["status"] == "failed":
+                        self.results[first]["paired"]["status"] = "failed"
+                    self.results[first]["paired"][second] = result[first]
 
         return True
 
@@ -315,55 +382,6 @@ class GwAddDemandCheck(GwTask):
             """
         )
         tools_db.execute_sql(self._update_addparam_sql_string())
-
-    def _check_node(self, node_name, node):
-        dem = node["requiredDemand"]
-        press = node["requiredPressure"]
-
-        # Skip node if already done in previous execution
-        if node_name in self.results:
-            return node_name, None
-
-        if node_name not in self.network.node_name_list:
-            return node_name, {"error": "Node not found in INP file."}
-
-        # Run double test fist
-        double_demand_node = {
-            "name": node_name,
-            "requiredDemand": 2 * dem,
-            "requiredPressure": press,
-        }
-        test = self._execute_individual_check([double_demand_node])
-        double_test = test[node_name]
-        self.executed_simulations += 1
-
-        # Use result of double test to check for need of simple test
-        if (
-            double_test["modelDemand"] + self.accuracy >= dem
-            and double_test["modelPressure"] + self.accuracy >= press
-        ):
-            simple_test = {"status": "ok"}
-        elif (
-            double_test["modelDemand"] + self.accuracy < dem
-            and double_test["modelPressure"] + self.accuracy < press
-        ):
-            simple_test = {
-                "status": "failed",
-                "requiredDemand": dem,
-                "requiredPressure": press,
-                "modelDemand": double_test["modelDemand"],
-                "modelPressure": double_test["modelPressure"],
-            }
-        else:
-            test = self._execute_individual_check([node])
-            simple_test = test[node_name]
-            self.executed_simulations += 1
-
-        return node_name, {
-            "simple": simple_test,
-            "doubled": double_test,
-            "paired": {"status": None},
-        }
 
     def _update_addparam_sql_string(self):
         template = """
