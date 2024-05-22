@@ -210,10 +210,7 @@ class GwAddDemandCheck(GwTask):
     def _create_network(self):
         self.cur_step = "Preparing network model..."
         wn = wntr.network.read_inpfile(self.input_file)
-        self.adjusted_demands = (
-            wntr.metrics.hydraulic.average_expected_demand(wn)
-            * self.config.options["base_demand_multiplier"]
-        )
+        self.adjusted_demands = wntr.metrics.hydraulic.average_expected_demand(wn)
 
         # Replace demands with the adjusted demands
         wn.add_pattern("constant_pattern", [1])
@@ -343,7 +340,6 @@ class GwAddDemandCheck(GwTask):
         with open(file_path, "w") as infile:
             infile.write("[OPTIONS]\n")
             infile.write(f"max_distance           {o['max_distance']}\n")
-            infile.write(f"base_demand_multiplier {o['base_demand_multiplier']}\n")
             infile.write("\n[JUNCTIONS]\n")
             for node in self.config.junctions.values():
                 name = node["name"]
