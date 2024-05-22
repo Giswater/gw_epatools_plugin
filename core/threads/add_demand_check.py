@@ -68,7 +68,7 @@ class GwAddDemandCheck(GwTask):
         self.cur_step = old_steps + "\n\nChecking individual nodes..."
 
         i = 0
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=5) as executor:
             for node_name, result in executor.map(
                 self._check_node,
                 self.config.junctions.keys(),
@@ -180,7 +180,7 @@ class GwAddDemandCheck(GwTask):
         self.cur_step = old_steps + "\n\nChecking node pairs..."
 
         i = 0
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=5) as executor:
             for result in executor.map(self._check_pair, self.pairs):
                 i += 1
                 self.cur_step = (
