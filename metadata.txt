@@ -16,8 +16,10 @@ author=Nestor Ibáñez, David Erill, Barbara Rzepka, Sergi Muñoz, Josep Lluís 
 # End of mandatory metadata
 
 changelog=
-    3.6.009-1 DEV
-    - Epa Multi Calls
+    3.6.009-1 (2024-05-22)
+    - Introduced the EPA Multi Calls tool.
+    - Enhanced the Additional Demand Check to use multithreading.
+    - Removed the base_demand_multiplier option from Additional Demand Check. (To apply a multiplier, use the options in the INP file.)
     3.6.009 (2024-03-27)
     - Fix duplicated toolbars when loading other project
     3.6.007 (2024-02-06)
