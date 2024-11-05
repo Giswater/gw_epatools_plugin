@@ -7,8 +7,7 @@ qgisMinimumVersion=3.10.13
 qgisMaximumVersion=3.99
 description=EPA tools for giswater plugin
 about=
-    To use this plugin, install first the Giswater plugin and the WNTR python package.
-    <a href="https://github.com/Giswater/gw_epatools_plugin#how-to-install-wntr-package">How to install the WNTR package</a>. 
+    To use this plugin, install first the Giswater plugin.
 version=3.6.009
 
 author=Nestor Ibáñez, David Erill, Barbara Rzepka, Sergi Muñoz, Josep Lluís Sala, Edgar Fusté, Sergi Maspons, Albert Bofill, Xavier Torret, Pablo Marques
@@ -24,7 +23,7 @@ changelog=
     - Fix duplicated toolbars when loading other project
     3.6.007 (2024-02-06)
     - Additional Demand Check tool
-   
+
 # Tags are comma separated with spaces allowed
 tags= giswater, water networks, sewerage, urban drainage, EPANET, SWMM
 
@@ -35,3 +34,4 @@ category=Plugins
 icon=icons/dialogs/20x20/giswater.png
 experimental=True
 deprecated=False
+plugin_dependencies=giswater
