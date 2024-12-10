@@ -4,7 +4,6 @@ The program is free software: you can redistribute it and/or modify it under the
 General Public License as published by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
 """
-
 import datetime
 import json
 import math
@@ -337,7 +336,10 @@ class ConfigADC:
         self.junctions = {}
         self._parse_file(config_file)
 
-        required_options: list[str] = ["max_distance"]
+        required_options = [
+            "max_distance",
+            "base_demand_multiplier",
+        ]
         for option in required_options:
             if option not in self.options:
                 raise ValueError(f"{option} not found in [OPTIONS] section.")
@@ -361,6 +363,8 @@ class ConfigADC:
     def _process_option(self, tokens):
         if tokens[0].lower() == "max_distance":
             self.options["max_distance"] = float(tokens[1])
+        if tokens[0].lower() == "base_demand_multiplier":
+            self.options["base_demand_multiplier"] = float(tokens[1])
 
     def _process_junction(self, tokens):
         node = tokens[0]
