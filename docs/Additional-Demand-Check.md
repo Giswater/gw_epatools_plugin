@@ -18,7 +18,7 @@ The Additional Demand Check dialog provides several fields that need to be fille
 
 - **Input INP file**: Provide the path to the EPANET INP file that you want to analyze. This file contains the EPANET model data and network configuration.
 
-- **Configuration file**: Specify the path to the .in file that contains additional configuration settings for the analysis. The .in file is used to set parameters such as the maximum distance between nodes to be paired and the base demand multiplier.
+- **Configuration file**: Specify the path to the .in file that contains additional configuration settings for the analysis. The .in file is used to set parameters such as the maximum distance between nodes to be paired.
 
 - **Use nodes from**: This option allows you to choose the source of nodes for demand addition. There are two radio buttons:
   - "Configuration file": Nodes will be extracted from the .in file provided in the "Configuration file" field.
@@ -37,9 +37,6 @@ Here's an example of the contents of a .in file used by the Additional Demand Ch
 ; Maximum distance between two nodes to be paired
 max_distance 500
 
-; Factor to be applied after calculation of average demand
-base_demand_multiplier 1.7
-
 ; Demand and pressure use the same units from inp_file
 
 [JUNCTIONS]
@@ -51,7 +48,7 @@ base_demand_multiplier 1.7
 1021    16.667    10
 ```
 
-- The `[OPTIONS]` section defines the maximum distance between two nodes to be paired and the base demand multiplier to be applied after calculating the average demand.
+- The `[OPTIONS]` section defines the maximum distance between two nodes to be paired.
 - The `[JUNCTIONS]` section lists the nodes along with their initial demands and pressures. These nodes will be considered for additional demand analysis.
 
 ## Running the Analysis
