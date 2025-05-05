@@ -8,13 +8,15 @@ qgisMaximumVersion=3.99
 description=EPA tools for giswater plugin
 about=
     To use this plugin, install first the Giswater plugin.
-version=3.6.009
+version=3.6.015
 
 author=Nestor Ibáñez, David Erill, Barbara Rzepka, Sergi Muñoz, Josep Lluís Sala, Edgar Fusté, Sergi Maspons, Albert Bofill, Xavier Torret, Pablo Marques
 
 # End of mandatory metadata
 
 changelog=
+	3.6.015
+	- Improved the management of WNTR package installation.
     3.6.009-1 (2024-05-22)
     - Introduced the EPA Multi Calls tool.
     - Enhanced the Additional Demand Check to use multithreading.
@@ -34,4 +36,3 @@ category=Plugins
 icon=icons/dialogs/20x20/giswater.png
 experimental=True
 deprecated=False
-plugin_dependencies=giswater
